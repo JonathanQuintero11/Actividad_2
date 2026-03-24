@@ -2,7 +2,17 @@ const express = require('express');
 const app = express();
 
 app.get('/', (req, res) => {
-  res.send('Hola mundo desde Express');
+  res.send('API funcionando');
+});
+
+app.get('/usuario', (req, res) => {
+  const usuario = {
+    id: 1,
+    nombre: 'Jonathan',
+    rol: 'Administrador'
+  };
+
+  res.json(usuario);
 });
 
 app.listen(3000, () => {
