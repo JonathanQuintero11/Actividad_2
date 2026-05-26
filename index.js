@@ -203,15 +203,42 @@ app.post('/api/assignMateriaToAlumno', async (req, res) => {
     }
 });
 
+// 2. Consultar materias relacionadas a un alumno
 app.get('/api/getMateriasByAlumnoId/:id', async (req, res) => {
     try {
         const { id } = req.params;
-        const sql = `SELECT m.nombre, m.semestre FROM materia m 
-                     JOIN alumno_materia am ON m.id = am.materia_id WHERE am.alumno_id = $1`;
+
+        // VALIDACIÓN: Que el id sea numérico
+        if (isNaN(id)) {
+            return res.status(400).json({ message: "El ID del alumno debe ser numérico" });
+        }
+
+        // VALIDACIÓN: Que el alumno exista y esté activo (isActive = true)
+        const alumnoCheck = await pool.query(
+            'SELECT * FROM alumno WHERE id = $1 AND isActive = true', 
+            [id]
+        );
+
+        if (alumnoCheck.rows.length === 0) {
+            return res.status(404).json({ message: "El alumno no existe o se encuentra inactivo" });
+        }
+
+        // CONSULTA: Si pasa las validaciones, traemos las materias con un JOIN
+        const sql = `
+            SELECT m.id, m.nombre, m.semestre 
+            FROM materia m
+            JOIN alumno_materia am ON m.id = am.materia_id 
+            WHERE am.alumno_id = $1`;
+            
         const result = await pool.query(sql, [id]);
-        res.status(200).json({ data: result.rows });
+
+        res.status(200).json({ 
+            message: "Materias encontradas correctamente",
+            data: result.rows 
+        });
+
     } catch (error) {
-        res.status(500).json({ message: "Error al consultar" });
+        res.status(500).json({ message: "Error al consultar las materias del alumno", error: error.message });
     }
 });
 
