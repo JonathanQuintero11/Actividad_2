@@ -227,7 +227,7 @@ app.post('/api/assignMateriaToAlumno', async (req, res) => {
         res.status(500).json({ message: "Error interno", error: error.message });
     }
 });
-//borrar luego
+
 // 2. Consultar materias relacionadas a un alumno
 app.get('/api/getMateriasByAlumnoId/:id', async (req, res) => {
     try {
@@ -276,7 +276,7 @@ app.get('/api/getMateriasCountByAlumnoId/:id', async (req, res) => {
         res.status(500).json({ message: "Error al contar" });
     }
 });
-
+//GABO BORRA ESTO WE
 app.listen(3000, () => {
   console.log('🚀 Servidor corriendo en http://localhost:3000');
 });
