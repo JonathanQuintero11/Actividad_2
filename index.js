@@ -191,15 +191,40 @@ app.post("/api/createVehiculo", async (req, res) => {
 app.post('/api/assignMateriaToAlumno', async (req, res) => {
     try {
         const { alumno_id, materia_id } = req.body;
+
+        // 1. Validar que no vengan vacíos y sean números
         if (!alumno_id || !materia_id || isNaN(alumno_id) || isNaN(materia_id)) {
-            return res.status(400).json({ message: "alumno_id y materia_id son obligatorios" });
+            return res.status(400).json({ message: "alumno_id y materia_id son obligatorios y deben ser numéricos" });
         }
+
+        // 2. VALIDACIÓN ESCENARIO 2: ¿El alumno existe y está activo?
+        const alumnoCheck = await pool.query('SELECT * FROM alumno WHERE id = $1 AND isActive = true', [alumno_id]);
+        if (alumnoCheck.rows.length === 0) {
+            return res.status(404).json({ message: "El alumno no existe o no está activo" });
+        }
+
+        // 3. VALIDACIÓN ESCENARIO 3: ¿La materia existe?
+        const materiaCheck = await pool.query('SELECT * FROM materia WHERE id = $1', [materia_id]);
+        if (materiaCheck.rows.length === 0) {
+            return res.status(404).json({ message: "La materia no existe" });
+        }
+
+        // 4. Si todo está bien, insertar la relación
         const sql = 'INSERT INTO alumno_materia (alumno_id, materia_id) VALUES ($1, $2) RETURNING *';
         const result = await pool.query(sql, [alumno_id, materia_id]);
-        res.status(201).json({ message: "Materia asignada", data: result.rows[0] });
+
+        res.status(201).json({
+            message: "Materia asignada correctamente al alumno",
+            data: result.rows[0]
+        });
+
     } catch (error) {
-        if (error.code === '23505') return res.status(400).json({ message: "Ya asignada" });
-        res.status(500).json({ message: "Error en el servidor" });
+        // Manejar duplicados (Escenario 4)
+        if (error.code === '23505') {
+            return res.status(400).json({ message: "Este alumno ya tiene asignada esa materia" });
+        }
+        // Si llega aquí, es un error real del servidor
+        res.status(500).json({ message: "Error interno", error: error.message });
     }
 });
 

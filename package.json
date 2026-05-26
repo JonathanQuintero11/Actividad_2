@@ -19,6 +19,7 @@
   },
   "homepage": "https://github.com/JonathanQuintero11/Actividad_2#readme",
   "dependencies": {
+    "dotenv": "^17.4.2",
     "express": "^5.2.1",
     "mongoose": "^9.6.2",
     "pg": "^8.20.0"
