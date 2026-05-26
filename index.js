@@ -161,26 +161,61 @@ app.post('/materias', async (req, res) => {
 // Llamar a la conexión
 connectMongoDB();
 
+// D.1 Consultar todos los vehículos en MongoDB
 app.get("/api/getVehiculos", async (req, res) => {
   try {
     const vehiculos = await Vehiculo.find();
-    res.status(200).json({ message: "Vehículos consultados correctamente", data: vehiculos });
+    res.status(200).json({ 
+      message: "Vehículos consultados correctamente", 
+      data: vehiculos 
+    });
   } catch (error) {
-    res.status(500).json({ message: "Error al consultar vehículos", error: error.message });
+    res.status(500).json({ 
+      message: "Error al consultar vehículos en MongoDB", 
+      error: error.message 
+    });
   }
 });
 
+// D.2 Crear vehículo en MongoDB - CORREGIDO
 app.post("/api/createVehiculo", async (req, res) => {
   try {
     const { marca, modelo, anio, color } = req.body;
+
+    // 1. VALIDACIÓN: Que todos los campos existan
     if (!marca || !modelo || !anio || !color) {
-      return res.status(400).json({ message: "Todos los campos son obligatorios" });
+      return res.status(400).json({ 
+        message: "Faltan campos obligatorios: marca, modelo, anio y color son requeridos" 
+      });
     }
-    const nuevoVehiculo = new Vehiculo({ marca, modelo, anio, color });
+
+    // 2. VALIDACIÓN: Que anio sea numérico
+    if (isNaN(anio)) {
+      return res.status(400).json({ 
+        message: "El campo 'anio' debe ser un valor numérico" 
+      });
+    }
+
+    // 3. CREACIÓN: ¡Aquí faltaba incluir el 'color' dentro de las llaves!
+    const nuevoVehiculo = new Vehiculo({ 
+        marca, 
+        modelo, 
+        anio, 
+        color  // <--- Agregamos esto para que Mongoose lo reciba
+    });
+
     await nuevoVehiculo.save();
-    res.status(201).json({ message: "Vehículo creado correctamente", data: nuevoVehiculo });
+
+    res.status(201).json({ 
+      message: "Vehículo creado correctamente en MongoDB", 
+      data: nuevoVehiculo 
+    });
+
   } catch (error) {
-    res.status(500).json({ message: "Error al crear vehículo", error: error.message });
+    res.status(500).json({ 
+      message: "Error al crear el vehículo", 
+      error: error.message 
+    });
   }
 });
 
