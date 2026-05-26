@@ -108,7 +108,7 @@ app.delete('/api/deleteAlumno/:id', async (req, res) => {
     res.status(500).json({ message: "Error al eliminar" });
   }
 });
-
+//
 
 // ==========================================
 //           RUTAS PARA MATERIAS
