@@ -8,9 +8,16 @@ const Vehiculo = require("./Vehiculo");
 // REQUISITO: Para leer el cuerpo de las peticiones POST (JSON)
 app.use(express.json());
 
-// ==========================================
-//           RUTAS PARA ALUMNOS
-// ==========================================
+// =============================================================================
+// SECCIÓN 1: CONFIGURACIÓN DE BASE DE DATOS NOSQL (MONGODB)
+// =============================================================================
+
+// Llamar a la conexión de MongoDB Atlas
+connectMongoDB();
+
+// =============================================================================
+// SECCIÓN 2: RUTAS PARA ALUMNOS (POSTGRESQL)
+// =============================================================================
 
 // GET - Obtener todos los alumnos
 app.get('/alumnos', async (req, res) => {
@@ -63,7 +70,7 @@ app.post('/alumnos', async (req, res) => {
 
 // --- NUEVOS ENDPOINTS PROYECTO FINAL (ALUMNOS) ---
 
-// GET - Buscar alumno por nombre o apellido (LIKE)
+// GET - Buscar alumno por nombre o apellido (Uso de operador LIKE para búsquedas parciales)
 app.get('/api/searchAlumno', async (req, res) => {
   try {
     const { query } = req.query;
@@ -78,7 +85,7 @@ app.get('/api/searchAlumno', async (req, res) => {
   }
 });
 
-// PUT - Modificar alumno
+// PUT - Modificar alumno (Actualización de registros existentes)
 app.put('/api/updateAlumno/:id', async (req, res) => {
   try {
     const { id } = req.params;
@@ -96,7 +103,7 @@ app.put('/api/updateAlumno/:id', async (req, res) => {
   }
 });
 
-// DELETE - Eliminar alumno (Lógico)
+// DELETE - Eliminar alumno (Implementación de Eliminación Lógica con isActive)
 app.delete('/api/deleteAlumno/:id', async (req, res) => {
   try {
     const { id } = req.params;
@@ -109,10 +116,9 @@ app.delete('/api/deleteAlumno/:id', async (req, res) => {
   }
 });
 
-
-// ==========================================
-//           RUTAS PARA MATERIAS
-// ==========================================
+// =============================================================================
+// SECCIÓN 3: RUTAS PARA MATERIAS (POSTGRESQL)
+// =============================================================================
 
 // GET - Obtener todas las materias
 app.get('/materias', async (req, res) => {
@@ -154,40 +160,73 @@ app.post('/materias', async (req, res) => {
   }
 });
 
-// ==========================================
-//           RUTAS MONGODB (VEHÍCULOS)
-// ==========================================
+// =============================================================================
+// SECCIÓN 4: RUTAS PARA VEHÍCULOS (MONGODB + MONGOOSE)
+// =============================================================================
 
-// Llamar a la conexión
-connectMongoDB();
-
+// D.1 Consultar todos los vehículos en MongoDB
 app.get("/api/getVehiculos", async (req, res) => {
   try {
     const vehiculos = await Vehiculo.find();
-    res.status(200).json({ message: "Vehículos consultados correctamente", data: vehiculos });
+    res.status(200).json({ 
+      message: "Vehículos consultados correctamente", 
+      data: vehiculos 
+    });
   } catch (error) {
-    res.status(500).json({ message: "Error al consultar vehículos", error: error.message });
+    res.status(500).json({ 
+      message: "Error al consultar vehículos en MongoDB", 
+      error: error.message 
+    });
   }
 });
 
+// D.2 Crear vehículo en MongoDB (Validación de campos y persistencia NoSQL)
 app.post("/api/createVehiculo", async (req, res) => {
   try {
     const { marca, modelo, anio, color } = req.body;
+
+    // VALIDACIÓN: Que todos los campos existan
     if (!marca || !modelo || !anio || !color) {
-      return res.status(400).json({ message: "Todos los campos son obligatorios" });
+      return res.status(400).json({ 
+        message: "Faltan campos obligatorios: marca, modelo, anio y color son requeridos" 
+      });
     }
-    const nuevoVehiculo = new Vehiculo({ marca, modelo, anio, color });
+
+    // VALIDACIÓN: Que anio sea numérico (Requisito del proyecto)
+    if (isNaN(anio)) {
+      return res.status(400).json({ 
+        message: "El campo 'anio' debe ser un valor numérico" 
+      });
+    }
+
+    // Si pasa las validaciones, se crea el documento usando el modelo de Mongoose
+    const nuevoVehiculo = new Vehiculo({ 
+        marca, 
+        modelo, 
+        anio,
+        color 
+    });
+
     await nuevoVehiculo.save();
-    res.status(201).json({ message: "Vehículo creado correctamente", data: nuevoVehiculo });
+
+    res.status(201).json({ 
+      message: "Vehículo creado correctamente en MongoDB", 
+      data: nuevoVehiculo 
+    });
+
   } catch (error) {
-    res.status(500).json({ message: "Error al crear vehículo", error: error.message });
+    res.status(500).json({ 
+      message: "Error al crear el vehículo", 
+      error: error.message 
+    });
   }
 });
 
-// ==========================================
-//       RELACIÓN ALUMNO-MATERIA
-// ==========================================
+// =============================================================================
+// SECCIÓN 5: GESTIÓN DE RELACIONES (ALUMNO-MATERIA) - TABLA INTERMEDIA
+// =============================================================================
 
+// C.1 Asignar materia a un alumno (Validación de integridad referencial)
 app.post('/api/assignMateriaToAlumno', async (req, res) => {
     try {
         const { alumno_id, materia_id } = req.body;
@@ -197,19 +236,19 @@ app.post('/api/assignMateriaToAlumno', async (req, res) => {
             return res.status(400).json({ message: "alumno_id y materia_id son obligatorios y deben ser numéricos" });
         }
 
-        // 2. VALIDACIÓN ESCENARIO 2: ¿El alumno existe y está activo?
+        // 2. VALIDACIÓN: ¿El alumno existe y está activo en la DB?
         const alumnoCheck = await pool.query('SELECT * FROM alumno WHERE id = $1 AND isActive = true', [alumno_id]);
         if (alumnoCheck.rows.length === 0) {
             return res.status(404).json({ message: "El alumno no existe o no está activo" });
         }
 
-        // 3. VALIDACIÓN ESCENARIO 3: ¿La materia existe?
+        // 3. VALIDACIÓN: ¿La materia existe en la DB?
         const materiaCheck = await pool.query('SELECT * FROM materia WHERE id = $1', [materia_id]);
         if (materiaCheck.rows.length === 0) {
             return res.status(404).json({ message: "La materia no existe" });
         }
 
-        // 4. Si todo está bien, insertar la relación
+        // 4. Si todo está bien, insertar la relación en la tabla intermedia
         const sql = 'INSERT INTO alumno_materia (alumno_id, materia_id) VALUES ($1, $2) RETURNING *';
         const result = await pool.query(sql, [alumno_id, materia_id]);
 
@@ -219,16 +258,15 @@ app.post('/api/assignMateriaToAlumno', async (req, res) => {
         });
 
     } catch (error) {
-        // Manejar duplicados (Escenario 4)
+        // Manejar duplicados (Código SQL 23505: Unique violation)
         if (error.code === '23505') {
             return res.status(400).json({ message: "Este alumno ya tiene asignada esa materia" });
         }
-        // Si llega aquí, es un error real del servidor
         res.status(500).json({ message: "Error interno", error: error.message });
     }
 });
-//borrar luego
-// 2. Consultar materias relacionadas a un alumno
+
+// C.2 Consultar materias relacionadas a un alumno (Uso de JOIN)
 app.get('/api/getMateriasByAlumnoId/:id', async (req, res) => {
     try {
         const { id } = req.params;
@@ -238,7 +276,7 @@ app.get('/api/getMateriasByAlumnoId/:id', async (req, res) => {
             return res.status(400).json({ message: "El ID del alumno debe ser numérico" });
         }
 
-        // VALIDACIÓN: Que el alumno exista y esté activo (isActive = true)
+        // VALIDACIÓN: Que el alumno exista y esté activo
         const alumnoCheck = await pool.query(
             'SELECT * FROM alumno WHERE id = $1 AND isActive = true', 
             [id]
@@ -248,7 +286,7 @@ app.get('/api/getMateriasByAlumnoId/:id', async (req, res) => {
             return res.status(404).json({ message: "El alumno no existe o se encuentra inactivo" });
         }
 
-        // CONSULTA: Si pasa las validaciones, traemos las materias con un JOIN
+        // CONSULTA: Uso de JOIN para obtener la información de la materia a través de la tabla intermedia
         const sql = `
             SELECT m.id, m.nombre, m.semestre 
             FROM materia m
@@ -267,6 +305,7 @@ app.get('/api/getMateriasByAlumnoId/:id', async (req, res) => {
     }
 });
 
+// C.3 Conteo de materias asignadas a un alumno (Uso de función de agregado COUNT)
 app.get('/api/getMateriasCountByAlumnoId/:id', async (req, res) => {
     try {
         const { id } = req.params;
@@ -276,6 +315,10 @@ app.get('/api/getMateriasCountByAlumnoId/:id', async (req, res) => {
         res.status(500).json({ message: "Error al contar" });
     }
 });
+
+// =============================================================================
+// SECCIÓN 6: INICIALIZACIÓN DEL SERVIDOR
+// =============================================================================
 
 app.listen(3000, () => {
   console.log('🚀 Servidor corriendo en http://localhost:3000');
