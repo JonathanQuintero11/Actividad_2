@@ -115,10 +115,18 @@ app.delete('/api/deleteAlumno/:id', async (req, res) => {
     res.status(500).json({ message: "Error al eliminar" });
   }
 });
+<<<<<<< HEAD
 
 // =============================================================================
 // SECCIÓN 3: RUTAS PARA MATERIAS (POSTGRESQL)
 // =============================================================================
+=======
+//
+
+// ==========================================
+//           RUTAS PARA MATERIAS
+// ==========================================
+>>>>>>> 1d98a5add2338320430b9ee0ae8805d56f7366c3
 
 // GET - Obtener todas las materias
 app.get('/materias', async (req, res) => {
@@ -180,31 +188,52 @@ app.get("/api/getVehiculos", async (req, res) => {
   }
 });
 
+<<<<<<< HEAD
 // D.2 Crear vehículo en MongoDB (Validación de campos y persistencia NoSQL)
+=======
+// D.2 Crear vehículo en MongoDB - CORREGIDO
+>>>>>>> 1d98a5add2338320430b9ee0ae8805d56f7366c3
 app.post("/api/createVehiculo", async (req, res) => {
   try {
     const { marca, modelo, anio, color } = req.body;
 
+<<<<<<< HEAD
     // VALIDACIÓN: Que todos los campos existan
+=======
+    // 1. VALIDACIÓN: Que todos los campos existan
+>>>>>>> 1d98a5add2338320430b9ee0ae8805d56f7366c3
     if (!marca || !modelo || !anio || !color) {
       return res.status(400).json({ 
         message: "Faltan campos obligatorios: marca, modelo, anio y color son requeridos" 
       });
     }
 
+<<<<<<< HEAD
     // VALIDACIÓN: Que anio sea numérico (Requisito del proyecto)
+=======
+    // 2. VALIDACIÓN: Que anio sea numérico
+>>>>>>> 1d98a5add2338320430b9ee0ae8805d56f7366c3
     if (isNaN(anio)) {
       return res.status(400).json({ 
         message: "El campo 'anio' debe ser un valor numérico" 
       });
     }
 
+<<<<<<< HEAD
     // Si pasa las validaciones, se crea el documento usando el modelo de Mongoose
     const nuevoVehiculo = new Vehiculo({ 
         marca, 
         modelo, 
         anio,
         color 
+=======
+    // 3. CREACIÓN: ¡Aquí faltaba incluir el 'color' dentro de las llaves!
+    const nuevoVehiculo = new Vehiculo({ 
+        marca, 
+        modelo, 
+        anio, 
+        color  // <--- Agregamos esto para que Mongoose lo reciba
+>>>>>>> 1d98a5add2338320430b9ee0ae8805d56f7366c3
     });
 
     await nuevoVehiculo.save();
@@ -266,7 +295,11 @@ app.post('/api/assignMateriaToAlumno', async (req, res) => {
     }
 });
 
+<<<<<<< HEAD
 // C.2 Consultar materias relacionadas a un alumno (Uso de JOIN)
+=======
+// 2. Consultar materias relacionadas a un alumno
+>>>>>>> 1d98a5add2338320430b9ee0ae8805d56f7366c3
 app.get('/api/getMateriasByAlumnoId/:id', async (req, res) => {
     try {
         const { id } = req.params;
@@ -315,11 +348,15 @@ app.get('/api/getMateriasCountByAlumnoId/:id', async (req, res) => {
         res.status(500).json({ message: "Error al contar" });
     }
 });
+<<<<<<< HEAD
 
 // =============================================================================
 // SECCIÓN 6: INICIALIZACIÓN DEL SERVIDOR
 // =============================================================================
 
+=======
+//GABO BORRA ESTO WE
+>>>>>>> 1d98a5add2338320430b9ee0ae8805d56f7366c3
 app.listen(3000, () => {
   console.log('🚀 Servidor corriendo en http://localhost:3000');
 });
